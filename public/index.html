@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Bot Client</title>
+    <style>
+        /* Temporary styles for login screen only - rest comes from style.css */
+        :root {
+            --discord-bg: #36393f;
+            --discord-secondary: #2f3136;
+            --discord-text: #dcddde;
+            --discord-button: #5865f2;
+        }
+
+        .login-screen {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--discord-bg);
+            font-family: 'Whitney', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+
+        .login-box {
+            background: var(--discord-secondary);
+            padding: 32px;
+            border-radius: 5px;
+            width: 480px;
+            box-shadow: 0 2px 10px 0 rgba(0,0,0,.2);
+            margin-bottom: 20px;
+        }
+
+        .login-box h2 {
+            color: #fff;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            background: #202225;
+            border: 1px solid rgba(0,0,0,0.3);
+            border-radius: 3px;
+            color: var(--discord-text);
+            font-size: 16px;
+        }
+
+        .login-box button {
+            width: 100%;
+            padding: 12px;
+            background: var(--discord-button);
+            color: white;
+            border: none;
+            border-radius: 3px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .login-box button:hover {
+            background: #4752c4;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* User Profile Modal Styles */
+        .user-profile-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--discord-secondary);
+            border-radius: 8px;
+            padding: 20px;
+            z-index: 1000;
+            min-width: 300px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 999;
+        }
+
+        .user-roles {
+            margin-top: 15px;
+        }
+
+        .role-tag {
+            display: inline-block;
+            padding: 4px 8px;
+            margin: 2px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Category Styles */
+        .category-header {
+            padding: 12px 8px;
+            color: var(--discord-text);
+            text-transform: uppercase;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .category-header:hover {
+            color: #fff;
+        }
+
+        .category-channels {
+            margin-left: 8px;
+        }
+
+        .voice-channel {
+            display: flex;
+            align-items: center;
+            padding: 6px 8px;
+            color: #72767d;
+            cursor: pointer;
+        }
+
+        .voice-channel:hover {
+            background: rgba(79,84,92,0.16);
+            color: var(--discord-text);
+        }
+
+        .voice-channel-icon {
+            margin-right: 6px;
+        }
+
+        /* Credits Style */
+        .credits {
+            color: #72767d;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 10px;
+            transition: color 0.2s ease;
+            cursor: pointer;
+        }
+
+        .credits:hover {
+            color: #dcddde;
+        }
+    </style>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-box">
+            <h2>Welcome back!</h2>
+            <input type="password" id="tokenInput" placeholder="Enter your bot token" autocomplete="off">
+            <button onclick="login()">Login to Discord</button>
+        </div>
+        <div class="credits" onclick="window.open('https://guns.lol/ibogro', '_blank');">
+            Credits: Made with ❤️ by wdza#0 (IBOGRO) on discord
+        </div>
+    </div>
+
+    <!-- Discord App (Hidden initially) -->
+    <div id="discordApp" class="discord-app hidden">
+        <!-- Servers Sidebar -->
+        <div class="servers-sidebar">
+            <div class="servers-list" id="serversList">
+                <!-- Servers will be populated here -->
+            </div>
+        </div>
+
+        <!-- Channels Sidebar -->
+        <div class="channels-sidebar">
+            <div class="server-header" id="serverHeader">
+                Select a Server
+            </div>
+            <div class="channels-list" id="channelsList">
+                <!-- Categories and Channels will be populated here -->
+            </div>
+
+            <!-- User/Bot Area -->
+            <div class="user-area">
+                <div class="bot-info">
+                    <img id="botAvatar" src="default-avatar.png" alt="Bot Avatar">
+                    <div class="bot-details">
+                        <span id="botName">Bot Name</span>
+                        <div class="status-indicator">
+                            <span class="status-dot"></span>
+                            <span id="botStatus">Online</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="chat-area">
+            <div class="chat-header" id="channelHeader">
+                Welcome
+            </div>
+            <div class="messages-container" id="messagesContainer">
+                <!-- Messages will be populated here -->
+            </div>
+            <div class="message-input-container">
+                <div class="message-input-wrapper">
+                    <button class="upload-button">+</button>
+                    <div class="input-wrapper">
+                        <input type="text" id="messageInput" placeholder="Message #" class="message-input">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Members Sidebar -->
+        <div class="members-sidebar">
+            <div class="members-list" id="membersList">
+                <!-- Members will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- User Profile Modal -->
+    <div class="modal-overlay" id="modalOverlay"></div>
+    <div class="user-profile-modal" id="userProfileModal">
+        <div class="user-profile-header">
+            <img id="modalUserAvatar" src="default-avatar.png" alt="User Avatar">
+            <h3 id="modalUsername">Username</h3>
+        </div>
+        <div class="user-roles" id="modalUserRoles">
+            <!-- Roles will be populated here -->
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
